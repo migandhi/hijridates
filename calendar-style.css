@@ -1,0 +1,488 @@
+/* Basic Reset / Font */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+#mumineen-calendar-container {
+    max-width: 900px; /* Adjust as needed */
+    margin: 20px auto;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    padding: 20px;
+    border-radius: 8px;
+}
+
+/* Header */
+.calendar-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.logo-placeholder {
+    width: 40px;
+    height: 40px;
+    background-color: #008000; /* Green color like the image */
+    margin-right: 15px;
+    border-radius: 4px; /* Optional: slightly rounded corners */
+     mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill="%23000" d="M50 10 C 70 10, 90 30, 90 50 S 70 90, 50 90 C 30 90, 10 70, 10 50 C 10 30, 30 10, 50 10 M 60 40 A 10 10 0 0 1 50 50 A 10 10 0 0 1 40 40 H 70 V 60 A 20 20 0 0 0 50 80 A 20 20 0 0 0 30 60 V 40 Z"/></svg>') no-repeat center center;
+    -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill="%23000" d="M50 10 C 70 10, 90 30, 90 50 S 70 90, 50 90 C 30 90, 10 70, 10 50 C 10 30, 30 10, 50 10 M 60 40 A 10 10 0 0 1 50 50 A 10 10 0 0 1 40 40 H 70 V 60 A 20 20 0 0 0 50 80 A 20 20 0 0 0 30 60 V 40 Z"/></svg>') no-repeat center center;
+     mask-size: contain;
+    -webkit-mask-size: contain;
+}
+
+
+.calendar-title-area h1 {
+    margin: 0 0 2px 0;
+    font-size: 1.75em;
+    font-weight: 600;
+    color: #222;
+}
+
+.calendar-title-area p {
+    margin: 0;
+    color: #555;
+    font-size: 0.9em;
+}
+
+/* Navigation */
+.calendar-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: 15px; /* Space between items if they wrap */
+}
+
+.year-controls, .month-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Space between buttons and text */
+}
+
+.current-year, .current-month {
+    font-weight: bold;
+    font-size: 1.25em;
+    color: #333;
+    padding: 0 10px;
+    min-width: 80px; /* Ensure space for year */
+    text-align: center;
+}
+.current-month {
+    min-width: 220px; /* More space for month name */
+    text-align: center;
+}
+
+
+.nav-button, .today-button {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 1em;
+    transition: background-color 0.2s ease;
+}
+.nav-button:hover {
+    background-color: #e0e0e0;
+}
+
+.year-button {
+    font-weight: bold;
+    padding: 6px 10px; /* Slightly smaller padding */
+}
+
+.month-button {
+    font-size: 1.5em; /* Make arrows larger */
+    line-height: 1; /* Adjust line height for vertical alignment */
+    padding: 4px 10px;
+    background-color: #4a90e2; /* Blue like image */
+    color: white;
+    border: none;
+}
+.month-button:hover {
+    background-color: #3a7bc8;
+}
+
+
+.today-button {
+    background-color: #4a90e2; /* Blue like image */
+    color: white;
+    border: none;
+    font-weight: bold;
+}
+.today-button:hover {
+    background-color: #3a7bc8;
+}
+
+/* Calendar Grid */
+.calendar-grid {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed; /* Ensure columns are equally sized */
+}
+
+.calendar-grid th {
+    text-align: center;
+    padding: 10px 5px;
+    font-weight: 600;
+    color: #555;
+    background-color: #f9f9f9;
+    border-bottom: 2px solid #eee;
+}
+
+.calendar-grid td {
+    border: 1px solid #eee;
+    height: 100px; /* Adjust height as needed */
+    vertical-align: top;
+    padding: 0; /* Remove padding, use inner div */
+    position: relative; /* Needed for absolute positioning inside */
+}
+
+.day-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box; /* Include padding/border in element's total width/height */
+    padding: 4px; /* Small padding inside the cell content area */
+}
+
+
+.hijri-date {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 1.5em; /* Larger Hijri date */
+    font-weight: normal;
+    color: #444;
+    font-family: 'Tahoma', 'Arial', sans-serif; /* Ensure Arabic numerals font */
+}
+
+.gregorian-date {
+    position: absolute;
+    bottom: 5px;
+    left: 5px;
+    font-size: 0.75em;
+    color: #888;
+}
+
+/* Cell States */
+.other-month .day-content {
+    background-color: #fdfdfd; /* Very light grey */
+}
+.other-month .hijri-date,
+.other-month .gregorian-date {
+    color: #bbb; /* Greyed out text */
+}
+.other-month .indicator-icon {
+    opacity: 0.6; /* Make icons fainter too */
+}
+
+/* Highlight for the specific date in the image */
+.today .day-content {
+    background-color: #d4edda; /* Light green background like image */
+}
+.today .hijri-date,
+.today .gregorian-date {
+     color: #155724; /* Darker green text */
+}
+
+
+/* --- Miqaat Indicator Icons --- */
+/* General Indicator Style */
+.indicator-icon {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 12px; /* Adjusted size */
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    cursor: pointer; /* Indicate it's clickable */
+    z-index: 1; /* Ensure it's above default content */
+    box-shadow: 0 0 0 1px white; /* Tiny white outline */
+}
+
+/* Priority 1 Miqaat Style (e.g., filled circle, important color) */
+.indicator-icon.miqaat-p1 {
+    background-color: #e67e22; /* Orange */
+    box-shadow: 0 0 0 2px white; /* Make it stand out more*/
+}
+
+/* Priority 2 Miqaat Style (e.g., outline circle, secondary color) */
+.indicator-icon.miqaat-p2 {
+    background-color: #3498db; /* Blue */
+    border: 1px solid #2980b9; /* Optional darker border */
+}
+
+/* Priority 3 Miqaat Style (e.g., small dot, subtle color) */
+.indicator-icon.miqaat-p3 {
+    background-color: #95a5a6; /* Grey */
+    width: 8px; /* Smaller */
+    height: 8px;
+    top: 7px; /* Adjust position slightly */
+    left: 7px;
+}
+
+/* Make day content clickable if it has an indicator */
+.day-content:has(.indicator-icon) {
+   cursor: pointer;
+}
+/* Fallback for browsers not supporting :has() - less precise */
+.calendar-day:has(.indicator-icon) .day-content {
+    cursor: pointer;
+}
+
+
+/* --- Popup Styles --- */
+.miqaat-popup {
+    display: none; /* Hidden by default */
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 450px;
+    background-color: white;
+    border: 1px solid #ccc;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    border-radius: 8px;
+    padding: 25px;
+    padding-top: 40px; /* Space for close button */
+    z-index: 1050; /* Above backdrop */
+    font-size: 0.9em;
+}
+
+.miqaat-popup.visible {
+    display: block;
+}
+
+.popup-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #888;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+ .popup-close:hover {
+     color: #333;
+ }
+
+#popup-date {
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    font-size: 1.1em;
+    color: #333;
+}
+
+#popup-content ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 300px; /* Allow scrolling if many miqaats */
+    overflow-y: auto;
+}
+
+#popup-content li {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px dotted #eee;
+}
+ #popup-content li:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+ }
+
+#popup-content strong {
+    display: block;
+    margin-bottom: 3px;
+    color: #0056b3; /* Or another distinct color */
+}
+
+ #popup-content span { /* For description */
+    color: #555;
+    font-size: 0.95em;
+ }
+
+/* Backdrop */
+.popup-backdrop {
+    display: none; /* Hidden by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4); /* Semi-transparent black */
+    z-index: 1040; /* Below popup */
+}
+
+.popup-backdrop.visible {
+    display: block;
+}
+
+/* Responsive Adjustments (Optional but Recommended) */
+@media (max-width: 768px) {
+    #mumineen-calendar-container {
+        padding: 10px;
+    }
+    .calendar-navigation {
+        flex-direction: column; /* Stack nav items */
+        align-items: stretch; /* Stretch items full width */
+    }
+    .current-month, .current-year {
+         min-width: auto; /* Allow text to wrap */
+         text-align: center;
+         padding: 5px 0;
+    }
+    .calendar-grid th {
+        font-size: 0.8em;
+        padding: 8px 2px;
+    }
+    .calendar-grid td {
+        height: 70px; /* Reduce cell height */
+    }
+    .hijri-date {
+        font-size: 1.2em;
+    }
+    .gregorian-date {
+        font-size: 0.7em;
+    }
+    .indicator-icon { /* Adjust icon size/position for smaller cells */
+        width: 10px;
+        height: 10px;
+    }
+    .indicator-icon.miqaat-p3 {
+        width: 6px;
+        height: 6px;
+        top: 6px;
+        left: 6px;
+    }
+
+    .miqaat-popup {
+        padding: 15px;
+        padding-top: 35px;
+    }
+    #popup-date {
+        font-size: 1em;
+    }
+    #popup-content {
+        font-size: 0.9em;
+    }
+}
+
+/* --- Miqaat Indicator Icons --- */
+
+/* General Indicator Style (common properties) */
+.indicator-icon {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 12px; /* Base size */
+    height: 12px;
+    border-radius: 50%; /* Default shape */
+    display: inline-block;
+    cursor: pointer;
+    z-index: 1;
+    box-shadow: 0 0 0 1px white; /* Tiny outline helps visibility */
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: contain; /* Scale SVG/image nicely */
+}
+
+/* --- DAY Events --- */
+/* Priority 1 (e.g., filled circle, important color) */
+.indicator-icon.miqaat-p1 {
+    background-color: #e67e22; /* Orange */
+    box-shadow: 0 0 0 2px white; /* Make it stand out more */
+}
+
+/* Priority 2 (e.g., filled circle, secondary color) */
+.indicator-icon.miqaat-p2 {
+    background-color: #3498db; /* Blue */
+}
+
+/* Priority 3 (e.g., smaller filled circle, subtle color) */
+.indicator-icon.miqaat-p3 {
+    background-color: #95a5a6; /* Grey */
+    width: 8px;
+    height: 8px;
+    top: 7px;
+    left: 7px;
+}
+
+/* --- NIGHT Events (Crescent Moon) --- */
+.indicator-icon.miqaat-night {
+    background-color: transparent; /* Remove background color */
+    border-radius: 0; /* Remove border-radius if using image/mask */
+    width: 14px; /* Adjust size for icon */
+    height: 14px;
+    top: 4px; /* Adjust position */
+    left: 4px;
+    /* Simple SVG Crescent Moon (Yellow) - Use background-image */
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFEB3B"><path d="M12 2c-5.52 0-10 4.48-10 10s4.48 10 10 10c1.37 0 2.68-.28 3.88-.79-.44-.39-.83-.84-1.17-1.34-.85-1.26-1.21-2.76-1.21-4.37 0-3.31 2.69-6 6-6 .4 0 .78.04 1.16.12.16-.52.27-1.07.27-1.63 0-5.52-4.48-10-10-10z"/></svg>');
+
+    /* Alternative using mask (Browser support varies) - requires a black shape on transparent bg */
+    /* mask-image: url('path/to/crescent-mask.svg');
+    -webkit-mask-image: url('path/to/crescent-mask.svg');
+    mask-size: contain;
+    -webkit-mask-size: contain;
+    background-color: #FFEB3B; /* Color applied will show through the mask */
+}
+
+/* Ensure other-month icons are slightly faded */
+.other-month .indicator-icon {
+   opacity: 0.6;
+}
+
+/* Make day content clickable if it has an indicator */
+.day-content:has(.indicator-icon) {
+   cursor: pointer;
+}
+/* Fallback for browsers not supporting :has() */
+.calendar-day:has(.indicator-icon) .day-content {
+    cursor: pointer;
+}
+
+/* --- Popup Styles --- */
+/* ... (keep existing popup styles) ... */
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 768px) {
+    /* ... (keep existing responsive styles) ... */
+
+    /* Adjust icon sizes/positions for smaller cells */
+    .indicator-icon {
+        width: 10px;
+        height: 10px;
+        top: 4px;
+        left: 4px;
+    }
+     .indicator-icon.miqaat-p3 {
+        width: 6px;
+        height: 6px;
+        top: 6px;
+        left: 6px;
+    }
+     .indicator-icon.miqaat-night {
+        width: 12px;
+        height: 12px;
+        top: 3px;
+        left: 3px;
+     }
+}
