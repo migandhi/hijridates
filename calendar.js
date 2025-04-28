@@ -59,31 +59,31 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch(MIQAATS_JSON_PATH);
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error(`HTTP error! status: ${response.status} - Failed to load ${MIQAATS_JSON_PATH}`);
             }
             miqaatsData = await response.json();
             console.log("Miqaats data loaded successfully from", MIQAATS_JSON_PATH);
-            if (!Array.isArray(miqaatsData) || miqaatsData.length === 0) {
-                console.warn("Miqaats data file is empty or invalid.");
-                // Decide how to handle this - maybe show a specific error?
-                throw new Error("Miqaats data is empty or invalid.");
+            if (!Array.isArray(miqaatsData)) {
+                throw new Error("Miqaats data is not a valid JSON array.");
             }
+             if (miqaatsData.length === 0) {
+                 console.warn("Miqaats data file is empty.");
+                 // We can continue, but events won't show.
+             }
         } catch (error) {
             console.error("Error loading or parsing miqaats data:", error);
             miqaatsData = []; // Ensure it's an empty array on error
-            calendarBody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: red; padding: 20px;">Error loading essential miqaats data. Calendar functionality may be limited. Please try refreshing.</td></tr>';
+            calendarBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: red; padding: 20px;">Error loading miqaats data: ${error.message}. Calendar functionality may be limited. Please check file path and JSON validity.</td></tr>`;
             // Rethrow the error to stop initialization if data is critical
             throw error;
         }
     }
 
-    // Function to find the *highest priority* miqaat level for a given Hijri date's icon
-        // UPDATED Function to find the highest priority miqaat level, including night events and removing Eid exception
-           // CORRECTED for "Year X onwards" logic
-       // UPDATED to return priority AND phase of highest priority event
-       function getMiqaatIndicatorInfo(hYear, hMonth, hDay) {
+    // Function to get info for the highest priority miqaat icon
+    // Returns { priority: P, phase: 'day'|'night' } or null
+    function getMiqaatIndicatorInfo(hYear, hMonth, hDay) {
         let highestPriority = 4;
-        let phaseOfHighest = null; // 'day' or 'night'
+        let phaseOfHighest = null;
 
         const relevantEntries = miqaatsData.filter(entry =>
             entry.month === hMonth && entry.date === hDay
@@ -92,6 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
         relevantEntries.forEach(entry => {
             if (entry.miqaats && Array.isArray(entry.miqaats)) {
                 entry.miqaats.forEach(miqaat => {
+                    // Check year applicability ("Year X onwards" logic)
                     const isYearApplicable = (miqaat.year === null || (miqaat.year !== null && hYear >= miqaat.year));
 
                     if (isYearApplicable) {
@@ -100,15 +101,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             highestPriority = currentMiqaatPriority;
                             phaseOfHighest = miqaat.phase; // Store the phase of this new highest priority event
                         }
-                         // If priorities are equal, we could add logic here, but usually,
-                         // the first one encountered with the highest priority is sufficient for icon display.
                     }
                 });
             }
         });
 
         if (highestPriority <= 3) {
-            // Return an object with info, or null if no relevant miqaat found
             return { priority: highestPriority, phase: phaseOfHighest };
         } else {
             return null; // No icon needed
@@ -123,9 +121,9 @@ document.addEventListener('DOMContentLoaded', () => {
             calendarBody.innerHTML = '<tr><td colspan="7">Error: Date library missing.</td></tr>';
             return;
         }
-        // Basic check if data is available (should be guaranteed by async init)
-        if (!Array.isArray(miqaatsData) || miqaatsData.length === 0) {
-             console.error("Attempted to render calendar without miqaats data.");
+        // Basic check if data is available (should be guaranteed by async init unless error)
+        if (!Array.isArray(miqaatsData)) {
+             console.error("Attempted to render calendar without miqaats data array.");
              // Error message should already be present from loadMiqaats failure
             return;
         }
@@ -144,60 +142,52 @@ document.addEventListener('DOMContentLoaded', () => {
         startDate.setDate(startDate.getDate() - dayOfWeekStart);
         startDate.setHours(0, 0, 0, 0);
 
-        const todayGregorian = new Date();
-        todayGregorian.setHours(0, 0, 0, 0);
+        const todayGregorian = new Date(); // Actual current date
+        todayGregorian.setHours(0, 0, 0, 0); // Normalize for comparison
 
         let html = '';
-        const gridDate = new Date(startDate);
+        const gridDate = new Date(startDate); // Date object to iterate through the grid
 
         for (let i = 0; i < 6; i++) {
             html += '<tr>';
-        
-        for (let j = 0; j < 7; j++) {
-            const cellGregorianDate = new Date(gridDate);
-            // Ensure time is normalized for comparison
-            cellGregorianDate.setHours(0, 0, 0, 0); // Add normalization here too
+            for (let j = 0; j < 7; j++) {
+                const cellGregorianDateNorm = new Date(gridDate); // Use normalized date for comparisons/conversions
+                cellGregorianDateNorm.setHours(0, 0, 0, 0);
 
-            const cellHijriDate = HijriDate.fromGregorian(cellGregorianDate); // Use normalized date for Hijri conversion too
-            const hDay = cellHijriDate.getDate();
-            const hMonth = cellHijriDate.getMonth();
-            const hYear = cellHijriDate.getYear();
+                const cellGregorianDateDisplay = new Date(gridDate); // Keep original for display formatting if needed
 
+                const cellHijriDate = HijriDate.fromGregorian(cellGregorianDateNorm);
+                const hDay = cellHijriDate.getDate();
+                const hMonth = cellHijriDate.getMonth();
+                const hYear = cellHijriDate.getYear();
 
-            const isCurrentMonth = (hMonth === hijriMonth && hYear === hijriYear);
-            // --- CORRECTED LOGIC ---
-            // Compare cell date with the actual todayGregorian date (already normalized)
-            const isToday = cellGregorianDate.getTime() === todayGregorian.getTime();
-            // --- END CORRECTED LOGIC ---
-            const isFirstInGrid = (i === 0 && j === 0);
+                const isCurrentMonth = (hMonth === hijriMonth && hYear === hijriYear);
+                const isToday = cellGregorianDateNorm.getTime() === todayGregorian.getTime();
+                const isFirstInGrid = (i === 0 && j === 0);
 
-            const classes = ['calendar-day'];
-            if (!isCurrentMonth) classes.push('other-month');
-            // --- CORRECTED LOGIC ---
-            // Highlight if it's the actual current date
-            if (isToday) classes.push('today');
-            // --- END CORRECTED LOGIC ---
+                const classes = ['calendar-day'];
+                if (!isCurrentMonth) classes.push('other-month');
+                if (isToday) classes.push('today'); // Highlight actual current date
 
-                const gregorianDateStr = formatGregorianDate(cellGregorianDate, isFirstInGrid, startDate);
+                const gregorianDateStr = formatGregorianDate(cellGregorianDateDisplay, isFirstInGrid, startDate);
                 const hijriDateStr = toArabicNumerals(hDay);
-                const gregorianDataAttr = `${cellGregorianDate.getFullYear()}-${String(cellGregorianDate.getMonth() + 1).padStart(2, '0')}-${String(cellGregorianDate.getDate()).padStart(2, '0')}`;
+                const gregorianDataAttr = `${cellGregorianDateNorm.getFullYear()}-${String(cellGregorianDateNorm.getMonth() + 1).padStart(2, '0')}-${String(cellGregorianDateNorm.getDate()).padStart(2, '0')}`;
 
-                               // --- NEW ICON GENERATION ---
-                               const indicatorInfo = getMiqaatIndicatorInfo(hYear, hMonth, hDay); // Use the new function
-                               let indicatorHtml = '';
-                               if (indicatorInfo) {
-                                   let iconClass = 'indicator-icon';
-                                   // Add night class OR priority class
-                                   if (indicatorInfo.phase === 'night') {
-                                       iconClass += ' miqaat-night';
-                                   } else {
-                                       // Only add priority class for day events
-                                       iconClass += ` miqaat-p${indicatorInfo.priority}`;
-                                   }
-                                   // Add data attribute for the click handler
-                                   indicatorHtml = `<span class="${iconClass}" data-hijri-date="${hYear}-${hMonth}-${hDay}" title="View Miqaats"></span>`;
-                               }
-                               // --- END NEW ICON GENERATION ---
+
+                // --- Render Icon ---
+                const indicatorInfo = getMiqaatIndicatorInfo(hYear, hMonth, hDay);
+                let indicatorHtml = '';
+                if (indicatorInfo) {
+                    let iconClass = 'indicator-icon';
+                    if (indicatorInfo.phase === 'night') {
+                        iconClass += ' miqaat-night';
+                    } else {
+                        iconClass += ` miqaat-p${indicatorInfo.priority}`;
+                    }
+                    indicatorHtml = `<span class="${iconClass}" data-hijri-date="${hYear}-${hMonth}-${hDay}" title="View Miqaats"></span>`;
+                }
+                // --- End Render Icon ---
+
 
                 html += `<td class="${classes.join(' ')}" data-gregorian-date="${gregorianDataAttr}">
                            <div class="day-content">
@@ -207,10 +197,13 @@ document.addEventListener('DOMContentLoaded', () => {
                            </div>
                          </td>`;
 
+                // Move to the next day and normalize
                 gridDate.setDate(gridDate.getDate() + 1);
+                gridDate.setHours(0, 0, 0, 0);
             }
             html += '</tr>';
 
+            // Optimization Check: Stop if next row starts in a future Hijri month
             const nextWeekStartDateCheck = new Date(gridDate);
             const nextWeekStartHijri = HijriDate.fromGregorian(nextWeekStartDateCheck);
             if (nextWeekStartHijri.getYear() > hijriYear || (nextWeekStartHijri.getYear() === hijriYear && nextWeekStartHijri.getMonth() > hijriMonth)) {
@@ -243,28 +236,52 @@ document.addEventListener('DOMContentLoaded', () => {
     function hideMiqaatPopup() {
         miqaatPopup.classList.remove('visible');
         popupBackdrop.classList.remove('visible');
-        // Clear content after fade out might be smoother, but this is simpler
-        popupContentElement.innerHTML = '';
+        popupContentElement.innerHTML = ''; // Clear content
         popupDateElement.textContent = '';
     }
 
     // --- Event Listeners ---
     prevMonthButton.addEventListener('click', () => {
-        let newMonth = currentHijriMonth - 1;
-        let newYear = currentHijriYear;
-        if (newMonth < 0) { newMonth = 11; newYear--; }
-        renderCalendar(newYear, newMonth);
+        let targetMonth = currentHijriMonth - 1;
+        let targetYear = currentHijriYear;
+        if (targetMonth < 0) { targetMonth = 11; targetYear--; }
+        const firstOfTargetHijri = new HijriDate(targetYear, targetMonth, 1);
+        const firstGregorian = firstOfTargetHijri.toGregorian();
+        const actualHijriToDisplay = HijriDate.fromGregorian(firstGregorian);
+        renderCalendar(actualHijriToDisplay.getYear(), actualHijriToDisplay.getMonth());
     });
+
     nextMonthButton.addEventListener('click', () => {
-        let newMonth = currentHijriMonth + 1;
-        let newYear = currentHijriYear;
-        if (newMonth > 11) { newMonth = 0; newYear++; }
-        renderCalendar(newYear, newMonth);
+        let targetMonth = currentHijriMonth + 1;
+        let targetYear = currentHijriYear;
+        if (targetMonth > 11) { targetMonth = 0; targetYear++; }
+        const firstOfTargetHijri = new HijriDate(targetYear, targetMonth, 1);
+        const firstGregorian = firstOfTargetHijri.toGregorian();
+        const actualHijriToDisplay = HijriDate.fromGregorian(firstGregorian);
+        renderCalendar(actualHijriToDisplay.getYear(), actualHijriToDisplay.getMonth());
     });
-    prevYearButton.addEventListener('click', () => renderCalendar(currentHijriYear - 1, currentHijriMonth));
-    nextYearButton.addEventListener('click', () => renderCalendar(currentHijriYear + 1, currentHijriMonth));
+
+    prevYearButton.addEventListener('click', () => {
+        const targetYear = currentHijriYear - 1;
+        const targetMonth = currentHijriMonth;
+        const firstOfTargetHijri = new HijriDate(targetYear, targetMonth, 1);
+        const firstGregorian = firstOfTargetHijri.toGregorian();
+        const actualHijriToDisplay = HijriDate.fromGregorian(firstGregorian);
+        renderCalendar(actualHijriToDisplay.getYear(), actualHijriToDisplay.getMonth());
+    });
+
+    nextYearButton.addEventListener('click', () => {
+        const targetYear = currentHijriYear + 1;
+        const targetMonth = currentHijriMonth;
+        const firstOfTargetHijri = new HijriDate(targetYear, targetMonth, 1);
+        const firstGregorian = firstOfTargetHijri.toGregorian();
+        const actualHijriToDisplay = HijriDate.fromGregorian(firstGregorian);
+        renderCalendar(actualHijriToDisplay.getYear(), actualHijriToDisplay.getMonth());
+    });
+
     todayButton.addEventListener('click', () => {
-        const todayHijri = HijriDate.fromGregorian(new Date());
+        const todayGregorian = new Date(); // Get current date/time
+        const todayHijri = HijriDate.fromGregorian(todayGregorian);
         renderCalendar(todayHijri.getYear(), todayHijri.getMonth());
     });
 
@@ -272,14 +289,12 @@ document.addEventListener('DOMContentLoaded', () => {
     popupCloseButton.addEventListener('click', hideMiqaatPopup);
     popupBackdrop.addEventListener('click', hideMiqaatPopup);
 
-    // Calendar body click listener (Event Delegation)
+    // Calendar body click listener (Event Delegation for Popup)
     calendarBody.addEventListener('click', (event) => {
         const target = event.target;
         let dayCell = null;
 
-        
-
-         // Check if an icon OR the day-content area within a cell that HAS an icon was clicked
+        // Check if an icon OR the day-content area within a cell that HAS an icon was clicked
          if (target.classList.contains('indicator-icon')) {
             dayCell = target.closest('.calendar-day');
          } else if (target.classList.contains('day-content') && target.querySelector('.indicator-icon')) {
@@ -294,57 +309,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const gDateParts = gregorianDateStr.split('-');
             const gDate = new Date(parseInt(gDateParts[0]), parseInt(gDateParts[1]) - 1, parseInt(gDateParts[2]));
-            gDate.setHours(12,0,0,0); // Avoid timezone issues
+            gDate.setHours(12,0,0,0); // Use midday for Hijri conversion to avoid timezone edge cases
             const hijriDate = HijriDate.fromGregorian(gDate);
             const hYear = hijriDate.getYear();
             const hMonth = hijriDate.getMonth();
             const hDay = hijriDate.getDate();
 
-           
-
-                             
-// --- NEW CORRECTED POPUP FILTER BLOCK ---
             // Find all *applicable* miqaats for this specific day for the POPUP using "Year X onwards" logic
-                       // --- RE-CORRECTED POPUP FILTER BLOCK ---
-            // Find all applicable miqaats for this specific day for the POPUP
-            // This filter MUST match the conditions used for showing ANY icon (including night & year>=)
-                        // --- RE-CORRECTED POPUP FILTER BLOCK ---
-            // Find all applicable miqaats for this specific day for the POPUP
-            // This filter MUST match the conditions used for showing ANY icon (including night & year>=)
             const dayMiqaats = [];
             miqaatsData.filter(entry => entry.month === hMonth && entry.date === hDay)
                        .forEach(entry => {
                            if (entry.miqaats && Array.isArray(entry.miqaats)) {
                                entry.miqaats.forEach(miqaat => {
-                                   // Check year applicability ("Year X onwards" logic)
                                    const isYearApplicablePopup = (miqaat.year === null || (miqaat.year !== null && hYear >= miqaat.year));
-
-                                   // If the year is applicable, add it to the list for the popup
-                                   // (We no longer filter by phase here, matching the icon display)
                                    if (isYearApplicablePopup) {
                                        dayMiqaats.push(miqaat);
                                    }
                                });
                            }
                        });
-             // --- END RE-CORRECTED POPUP FILTER BLOCK ---
 
-             // Add console log right after filtering to check the result:
-             console.log(`[Popup Filter] Date: ${hDay}/${hMonth}/${hYear}, Found Miqaats for Popup:`, JSON.stringify(dayMiqaats));
+            // console.log(`[Popup Filter] Date: ${hDay}/${hMonth}/${hYear}, Found Miqaats for Popup:`, JSON.stringify(dayMiqaats)); // Optional debug
 
-             // Sort miqaats by priority (good for display order)
-             dayMiqaats.sort((a, b) => a.priority - b.priority);
+            // Sort miqaats by priority (good for display order)
+            dayMiqaats.sort((a, b) => a.priority - b.priority);
 
-             // Call showMiqaatPopup if any were found
-             if (dayMiqaats.length > 0) {
-                 console.log("[Popup Filter] Conditions met, attempting to show popup."); // Add log
+            // Call showMiqaatPopup if any were found
+            if (dayMiqaats.length > 0) {
+                 // console.log("[Popup Filter] Conditions met, attempting to show popup."); // Optional debug
                  const hijriDateDisplay = `${hDay} ${HijriDate.getShortMonthName(hMonth)}, ${hYear}H`;
-                 const gregDateDisplay = `${gDate.getDate()} ${GREGORIAN_MONTHS_SHORT[gDate.getMonth()]} ${gDate.getFullYear()}`;
+                 // Format Gregorian date for display using original parts (or re-read from cell if needed)
+                 const gDayDisplay = gDateParts[2].startsWith('0') ? gDateParts[2].substring(1) : gDateParts[2]; // Remove leading zero for day
+                 const gMonthDisplay = GREGORIAN_MONTHS_SHORT[parseInt(gDateParts[1]) - 1];
+                 const gYearDisplay = gDateParts[0];
+                 const gregDateDisplay = `${gDayDisplay} ${gMonthDisplay} ${gYearDisplay}`;
+
                  showMiqaatPopup(gregDateDisplay, hijriDateDisplay, dayMiqaats);
-             } else {
-                  console.log("[Popup Filter] No applicable miqaats found for popup display."); // Add log
+            } else {
+                 // console.log("[Popup Filter] No applicable miqaats found for popup display."); // Optional debug
                  hideMiqaatPopup(); // Ensure it's hidden if nothing to show
-             }
+            }
         }
     });
 
@@ -353,22 +357,18 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             await loadMiqaats(); // Wait for data to load
 
-            // If loadMiqaats didn't throw an error but data is still empty (e.g., empty JSON file)
-             if (miqaatsData.length === 0) {
-                 console.error("Initialization stopped: Miqaats data is empty.");
-                 if (!calendarBody.innerHTML.includes('Error loading')) { // Avoid duplicate messages
-                    calendarBody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: orange; padding: 20px;">Miqaats data loaded but is empty. Calendar may not show events.</td></tr>';
-                 }
-                 // Continue rendering basic calendar structure anyway, or return here to completely stop
-            }
+            // Determine initial date (Use Today's date to start)
+            const todayGregorian = new Date();
+            const initialHijri = HijriDate.fromGregorian(todayGregorian);
+            renderCalendar(initialHijri.getYear(), initialHijri.getMonth());
 
-            // Set initial date (Shawwal 1446H from image)
-            const initialYear = 1446;
-            const initialMonth = 9;
-            renderCalendar(initialYear, initialMonth);
+            // Optionally, start on a specific date like the screenshot if needed for testing:
+            // const initialYear = 1446;
+            // const initialMonth = 9; // Shawwal
+            // renderCalendar(initialYear, initialMonth);
 
         } catch (error) {
-             console.error("Failed to initialize calendar due to data loading error:", error);
+             console.error("Failed to initialize calendar:", error);
              // Error message should already be in the calendar body from loadMiqaats
              // Optionally disable controls here
               [prevMonthButton, nextMonthButton, prevYearButton, nextYearButton, todayButton].forEach(btn => btn.disabled = true);

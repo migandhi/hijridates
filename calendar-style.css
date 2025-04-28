@@ -186,9 +186,9 @@ body {
     opacity: 0.6; /* Make icons fainter too */
 }
 
-/* Highlight for the specific date in the image */
+/* Highlight for the actual current date */
 .today .day-content {
-    background-color: #d4edda; /* Light green background like image */
+    background-color: #d4edda; /* Light green background */
 }
 .today .hijri-date,
 .today .gregorian-date {
@@ -197,46 +197,61 @@ body {
 
 
 /* --- Miqaat Indicator Icons --- */
-/* General Indicator Style */
+/* General Indicator Style (common properties) */
 .indicator-icon {
     position: absolute;
     top: 5px;
     left: 5px;
-    width: 12px; /* Adjusted size */
+    width: 12px; /* Base size */
     height: 12px;
-    border-radius: 50%;
+    border-radius: 50%; /* Default shape */
     display: inline-block;
-    cursor: pointer; /* Indicate it's clickable */
-    z-index: 1; /* Ensure it's above default content */
-    box-shadow: 0 0 0 1px white; /* Tiny white outline */
+    cursor: pointer;
+    z-index: 1;
+    box-shadow: 0 0 0 1px white; /* Tiny outline helps visibility */
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: contain; /* Scale SVG/image nicely */
 }
 
-/* Priority 1 Miqaat Style (e.g., filled circle, important color) */
+/* --- DAY Events --- */
+/* Priority 1 (e.g., filled circle, important color) */
 .indicator-icon.miqaat-p1 {
     background-color: #e67e22; /* Orange */
     box-shadow: 0 0 0 2px white; /* Make it stand out more*/
 }
 
-/* Priority 2 Miqaat Style (e.g., outline circle, secondary color) */
+/* Priority 2 (e.g., filled circle, secondary color) */
 .indicator-icon.miqaat-p2 {
     background-color: #3498db; /* Blue */
-    border: 1px solid #2980b9; /* Optional darker border */
 }
 
-/* Priority 3 Miqaat Style (e.g., small dot, subtle color) */
+/* Priority 3 (e.g., smaller filled circle, subtle color) */
 .indicator-icon.miqaat-p3 {
     background-color: #95a5a6; /* Grey */
-    width: 8px; /* Smaller */
+    width: 8px;
     height: 8px;
-    top: 7px; /* Adjust position slightly */
+    top: 7px;
     left: 7px;
+}
+
+/* --- NIGHT Events (Crescent Moon) --- */
+.indicator-icon.miqaat-night {
+    background-color: transparent; /* Remove background color */
+    border-radius: 0; /* Remove border-radius if using image/mask */
+    width: 14px; /* Adjust size for icon */
+    height: 14px;
+    top: 4px; /* Adjust position */
+    left: 4px;
+    /* Simple SVG Crescent Moon (Yellow) - Use background-image */
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFEB3B"><path d="M12 2c-5.52 0-10 4.48-10 10s4.48 10 10 10c1.37 0 2.68-.28 3.88-.79-.44-.39-.83-.84-1.17-1.34-.85-1.26-1.21-2.76-1.21-4.37 0-3.31 2.69-6 6-6 .4 0 .78.04 1.16.12.16-.52.27-1.07.27-1.63 0-5.52-4.48-10-10-10z"/></svg>');
 }
 
 /* Make day content clickable if it has an indicator */
 .day-content:has(.indicator-icon) {
    cursor: pointer;
 }
-/* Fallback for browsers not supporting :has() - less precise */
+/* Fallback for browsers not supporting :has() */
 .calendar-day:has(.indicator-icon) .day-content {
     cursor: pointer;
 }
@@ -363,109 +378,6 @@ body {
     .gregorian-date {
         font-size: 0.7em;
     }
-    .indicator-icon { /* Adjust icon size/position for smaller cells */
-        width: 10px;
-        height: 10px;
-    }
-    .indicator-icon.miqaat-p3 {
-        width: 6px;
-        height: 6px;
-        top: 6px;
-        left: 6px;
-    }
-
-    .miqaat-popup {
-        padding: 15px;
-        padding-top: 35px;
-    }
-    #popup-date {
-        font-size: 1em;
-    }
-    #popup-content {
-        font-size: 0.9em;
-    }
-}
-
-/* --- Miqaat Indicator Icons --- */
-
-/* General Indicator Style (common properties) */
-.indicator-icon {
-    position: absolute;
-    top: 5px;
-    left: 5px;
-    width: 12px; /* Base size */
-    height: 12px;
-    border-radius: 50%; /* Default shape */
-    display: inline-block;
-    cursor: pointer;
-    z-index: 1;
-    box-shadow: 0 0 0 1px white; /* Tiny outline helps visibility */
-    background-repeat: no-repeat;
-    background-position: center center;
-    background-size: contain; /* Scale SVG/image nicely */
-}
-
-/* --- DAY Events --- */
-/* Priority 1 (e.g., filled circle, important color) */
-.indicator-icon.miqaat-p1 {
-    background-color: #e67e22; /* Orange */
-    box-shadow: 0 0 0 2px white; /* Make it stand out more */
-}
-
-/* Priority 2 (e.g., filled circle, secondary color) */
-.indicator-icon.miqaat-p2 {
-    background-color: #3498db; /* Blue */
-}
-
-/* Priority 3 (e.g., smaller filled circle, subtle color) */
-.indicator-icon.miqaat-p3 {
-    background-color: #95a5a6; /* Grey */
-    width: 8px;
-    height: 8px;
-    top: 7px;
-    left: 7px;
-}
-
-/* --- NIGHT Events (Crescent Moon) --- */
-.indicator-icon.miqaat-night {
-    background-color: transparent; /* Remove background color */
-    border-radius: 0; /* Remove border-radius if using image/mask */
-    width: 14px; /* Adjust size for icon */
-    height: 14px;
-    top: 4px; /* Adjust position */
-    left: 4px;
-    /* Simple SVG Crescent Moon (Yellow) - Use background-image */
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFEB3B"><path d="M12 2c-5.52 0-10 4.48-10 10s4.48 10 10 10c1.37 0 2.68-.28 3.88-.79-.44-.39-.83-.84-1.17-1.34-.85-1.26-1.21-2.76-1.21-4.37 0-3.31 2.69-6 6-6 .4 0 .78.04 1.16.12.16-.52.27-1.07.27-1.63 0-5.52-4.48-10-10-10z"/></svg>');
-
-    /* Alternative using mask (Browser support varies) - requires a black shape on transparent bg */
-    /* mask-image: url('path/to/crescent-mask.svg');
-    -webkit-mask-image: url('path/to/crescent-mask.svg');
-    mask-size: contain;
-    -webkit-mask-size: contain;
-    background-color: #FFEB3B; /* Color applied will show through the mask */
-}
-
-/* Ensure other-month icons are slightly faded */
-.other-month .indicator-icon {
-   opacity: 0.6;
-}
-
-/* Make day content clickable if it has an indicator */
-.day-content:has(.indicator-icon) {
-   cursor: pointer;
-}
-/* Fallback for browsers not supporting :has() */
-.calendar-day:has(.indicator-icon) .day-content {
-    cursor: pointer;
-}
-
-/* --- Popup Styles --- */
-/* ... (keep existing popup styles) ... */
-
-/* --- Responsive Adjustments --- */
-@media (max-width: 768px) {
-    /* ... (keep existing responsive styles) ... */
-
     /* Adjust icon sizes/positions for smaller cells */
     .indicator-icon {
         width: 10px;
@@ -485,4 +397,15 @@ body {
         top: 3px;
         left: 3px;
      }
+
+    .miqaat-popup {
+        padding: 15px;
+        padding-top: 35px;
+    }
+    #popup-date {
+        font-size: 1em;
+    }
+    #popup-content {
+        font-size: 0.9em;
+    }
 }
